@@ -1,12 +1,42 @@
-const request = require('request');
+const yargs = require('yargs');
 
-request(
-  {
-    url:
-      'https://geocoder.tilehosting.com/q/1301%20lombard%20street%20philadelphia.js?key=sg0ycM5zjUDwJDeomH0O',
-    json: true
-  },
-  (error, response, body) => {
-    console.log(body);
+const geocode = require('./geocode/geocode.js');
+const weather = require('./weather/weather.js');
+
+const argv = yargs
+  .options({
+    address: {
+      demand: true,
+      alias: 'a',
+      describe: 'Address to fetch weather for',
+      string: true
+    }
+  })
+  .help()
+  .alias('help', 'h').argv;
+
+geocode.geocodeAddress(argv.address, (errorMessage, results) => {
+  if (errorMessage) {
+    console.log(errorMessage);
+  } else {
+    // console.log(JSON.stringify(results, undefined, 2));
+    console.log(results.address);
+
+    weather.getWeather(
+      results.latitude,
+      results.longitude,
+      (errorMessage, weatherResults) => {
+        if (errorMessage) {
+          console.log(errorMessage);
+        } else {
+          // console.log(JSON.stringify(weatherResults, undefined, 2));
+          console.log(
+            `It's currently ${weatherResults.temperature}. It feels like ${
+              weatherResults.apparentTemperature
+            }.`
+          );
+        }
+      }
+    );
   }
-);
+});
